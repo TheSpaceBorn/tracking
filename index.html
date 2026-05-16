@@ -152,7 +152,7 @@ body{background:var(--black);color:var(--text);font-family:var(--body);overflow-
   border:1px solid var(--border2);color:var(--text2);background:transparent;transition:all .2s}
 .fb.active,.fb:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,229,255,.05)}
 
-/* WEEKLY */
+/* WEEKLY — mobile card layout */
 .wb{margin-bottom:8px;border-radius:12px;overflow:hidden;border:1px solid var(--border)}
 .wh{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;
   cursor:pointer;background:rgba(13,13,32,.9);transition:background .2s;user-select:none}
@@ -163,23 +163,33 @@ body{background:var(--black);color:var(--text);font-family:var(--body);overflow-
 .warr.open{transform:rotate(180deg)}
 .wbody{background:rgba(10,10,26,.85);border-top:1px solid var(--border);display:none}
 .wbody.open{display:block}
-.dh{padding:10px 16px;background:rgba(0,0,0,.25);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.dl{font-family:var(--hud);font-size:9px;letter-spacing:2px;color:var(--purple2);min-width:72px}
-.dsumm{display:flex;gap:8px;align-items:center}
-.dnt{font-size:11px;color:var(--text3);font-style:italic;flex:1}
-.dtbl{width:100%;border-collapse:collapse;font-size:12px}
-.dtbl th{font-family:var(--hud);font-size:8px;letter-spacing:1px;color:var(--text3);
-  padding:9px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:500}
-.dtbl td{padding:9px 14px;border-bottom:1px solid rgba(26,26,58,.35);vertical-align:middle}
-.dtbl tr:last-child td{border-bottom:none}
-.dtbl tr:hover td{background:rgba(0,229,255,.015)}
-.chk{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:4px;
-  font-size:12px;border:1px solid var(--border2);background:rgba(0,0,0,.3);color:var(--text3)}
-.chk.y{background:rgba(57,255,20,.1);border-color:rgba(57,255,20,.3);color:var(--neon)}
-.chk.n{background:rgba(255,51,102,.07);border-color:rgba(255,51,102,.2);color:var(--red)}
-.cbadge{font-family:var(--hud);font-size:10px;padding:2px 7px;border-radius:3px;
+/* Day header summary bar */
+.dh{padding:10px 14px;background:rgba(0,0,0,.3);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dl{font-family:var(--hud);font-size:9px;letter-spacing:2px;color:var(--purple2);min-width:64px}
+.dsumm{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.dnt{font-size:10px;color:var(--text3);font-style:italic}
+.cbadge{font-family:var(--hud);font-size:9px;padding:2px 7px;border-radius:3px;
   background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.18);color:var(--cyan)}
+/* Officer cards inside a day — vertical stack, fully mobile friendly */
+.ocard-list{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.ocard{padding:12px 14px;border-radius:10px;
+  background:rgba(0,0,0,.25);border:1px solid var(--border2);
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ocard-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.ocard-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--hud);font-size:11px;font-weight:700}
+.ocard-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ocard-rank{font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px}
+.ocard-checks{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.ochk{display:flex;align-items:center;gap:5px}
+.ochk-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;border:1px solid var(--border2);background:rgba(0,0,0,.3);color:var(--text3);flex-shrink:0}
+.ochk-icon.y{background:rgba(57,255,20,.1);border-color:rgba(57,255,20,.3);color:var(--neon)}
+.ochk-icon.n{background:rgba(255,51,102,.07);border-color:rgba(255,51,102,.2);color:var(--red)}
+.ochk-lbl{font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.5px}
+.ocard-note{font-size:10px;color:var(--text3);font-style:italic;width:100%;padding-top:6px;border-top:1px solid rgba(26,26,58,.4);margin-top:2px}
 
 /* TRIALS */
 .tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:13px}
@@ -204,16 +214,6 @@ body{background:var(--black);color:var(--text);font-family:var(--body);overflow-
 .ctit{font-size:14px;font-weight:500;margin-bottom:6px}
 .cbod{font-size:12px;color:var(--text2);line-height:1.7}
 .cts{font-family:var(--mono);font-size:10px;color:var(--text3)}
-
-/* GUIDE */
-.gstep{padding:16px 18px;margin-bottom:8px;border-radius:10px;
-  background:rgba(13,13,32,.85);border:1px solid var(--border);border-left:3px solid var(--cyan)}
-.gstep h3{font-family:var(--hud);font-size:11px;letter-spacing:2px;color:var(--cyan);margin-bottom:7px}
-.gstep p,.gstep li{font-size:12px;color:var(--text2);line-height:1.75;font-family:var(--mono)}
-.gstep ul{margin-left:16px;margin-top:5px}
-.gstep li{margin-bottom:3px}
-code{background:rgba(0,229,255,.09);border:1px solid rgba(0,229,255,.2);padding:1px 5px;border-radius:4px;
-  font-family:var(--mono);font-size:10px;color:var(--cyan)}
 
 /* ADMIN */
 .apanel{max-width:960px;margin:0 auto;padding:18px}
@@ -277,12 +277,10 @@ code{background:rgba(0,229,255,.09);border:1px solid rgba(0,229,255,.2);padding:
   .ring:nth-child(2){width:300px;height:300px}.ring:nth-child(3){display:none}
   .lc{grid-template-columns:38px 1fr;gap:10px}.lright{display:none}
   .tg{grid-template-columns:1fr}.swr{grid-template-columns:repeat(2,1fr)}
-  .dtbl th:nth-child(n+4),.dtbl td:nth-child(n+4){display:none}
 }
 @media(max-width:480px){
   .nav{padding:0 10px}.sec{padding:32px 12px}
   .htitle{letter-spacing:3px}.hstats{gap:14px}
-  .dtbl th:nth-child(n+3),.dtbl td:nth-child(n+3){display:none}
 }
 </style>
 </head>
@@ -309,7 +307,6 @@ code{background:rgba(0,229,255,.09);border:1px solid rgba(0,229,255,.2);padding:
     <div class="ntab" onclick="go('weekly')">WEEKLY</div>
     <div class="ntab" onclick="go('trials')">TRIALS</div>
     <div class="ntab" onclick="go('complaints')">COMPLAINTS</div>
-    <div class="ntab" onclick="go('guide')">GUIDE</div>
     <div class="ntab" onclick="go('admin')">ADMIN</div>
   </div>
   <div class="nr">
@@ -323,7 +320,6 @@ code{background:rgba(0,229,255,.09);border:1px solid rgba(0,229,255,.2);padding:
   <div class="mtab" onclick="goM('weekly')">WEEKLY LOGS</div>
   <div class="mtab" onclick="goM('trials')">TRIAL OFFICERS</div>
   <div class="mtab" onclick="goM('complaints')">COMPLAINTS</div>
-  <div class="mtab" onclick="goM('guide')">SETUP GUIDE</div>
   <div class="mtab" onclick="goM('admin')">ADMIN PANEL</div>
 </div>
 
@@ -406,23 +402,6 @@ code{background:rgba(0,229,255,.09);border:1px solid rgba(0,229,255,.2);padding:
       <button class="fb" onclick="setCF('Resolved',this)">RESOLVED</button>
     </div>
     <div id="complaint-list"></div>
-  </div>
-</div>
-
-<!-- GUIDE -->
-<div class="page" id="page-guide">
-  <div class="sec">
-    <div class="sh"><div class="st">SETUP GUIDE</div><div class="ss">// GOOGLE SHEETS · GITHUB PAGES · ADMIN ACCESS</div></div>
-    <div class="gstep"><h3>STEP 1 — CREATE GOOGLE SHEET</h3><p>Go to <code>sheets.google.com</code> and create a new blank spreadsheet. Name it anything — e.g. <code>SPACE BORN Data</code>. Leave all sheets empty, the script creates them automatically.</p></div>
-    <div class="gstep"><h3>STEP 2 — OPEN APPS SCRIPT</h3><p>In your sheet: click <code>Extensions → Apps Script</code>. Delete any default code shown. Paste the entire contents of <code>google-apps-script.js</code> (included in the download). Save with <code>Ctrl+S</code>.</p></div>
-    <div class="gstep"><h3>STEP 3 — RUN SETUP ONCE</h3><p>In Apps Script, select <code>setupSheets</code> from the function dropdown, then click <code>▶ Run</code>. Accept all permissions when prompted. This creates 4 sheets: Leaders, WeeklyLogs, Trials, Complaints.</p></div>
-    <div class="gstep"><h3>STEP 4 — DEPLOY AS WEB APP</h3><ul><li>Click <code>Deploy → New Deployment</code></li><li>Type: <code>Web App</code></li><li>Execute as: <code>Me</code></li><li>Who has access: <code>Anyone</code></li><li>Click <code>Deploy</code> and copy the Web App URL</li></ul></div>
-    <div class="gstep"><h3>STEP 5 — CONNECT TO WEBSITE</h3><p>On this website: go to <code>ADMIN → login → SYNC/SETTINGS tab</code>. Paste your Web App URL into the Webhook field. Click <code>SAVE URL</code>. Done — all data you add via Admin will now push to Google Sheets automatically.</p></div>
-    <div class="gstep"><h3>STEP 6 — PUSH & PULL</h3><ul><li><strong>Auto Push:</strong> Every time you add/delete data via Admin Panel, it pushes to Sheets automatically.</li><li><strong>Manual Push:</strong> Click <code>⟲ PUSH TO SHEET</code> to force a full sync.</li><li><strong>Pull from Sheet:</strong> If you edit data directly in Google Sheets, click <code>↓ PULL FROM SHEET</code> to load it into the website.</li></ul></div>
-    <div class="gstep"><h3>STEP 7 — DEPLOY ON GITHUB PAGES</h3><ul><li>Create a new GitHub repository (public)</li><li>Upload <code>index.html</code> to the root of the repo</li><li>Go to <code>Settings → Pages → Source: main branch → / (root)</code></li><li>Your site goes live at <code>https://yourusername.github.io/repo-name</code></li><li>To update: replace <code>index.html</code> in the repo — changes go live in ~1 min</li></ul></div>
-    <div class="gstep"><h3>ADMIN CREDENTIALS</h3><p>Default: username <code>admin</code> / password <code>spaceborn2025</code>. Change the password immediately from <code>ADMIN → SYNC/SETTINGS</code> after first login. Password is saved in your browser's local storage.</p></div>
-    <div class="gstep"><h3>HOW TO ADD WEEKLY LOGS</h3><p>Go to <code>ADMIN → WEEKLY LOGS tab</code>. Select a week and day. The per-person grid shows all your leaders — check <code>ADS SENT</code> and <code>INTERACTED</code> for each person individually. Add a day note, then click <code>SAVE LOG</code>. Viewers see a table showing who did and didn't do the basics every day. Delete any log from the list at the bottom of the Admin panel.</p></div>
-    <div class="gstep"><h3>IMPORTANT NOTES</h3><ul><li>Data lives in-memory (browser RAM) + Google Sheets. Page reload resets in-memory data — use <code>↓ PULL FROM SHEET</code> to restore.</li><li>For auto-load on every visit without clicking Pull, you need a simple backend — or just make Pull a habit before each admin session.</li><li>Never share your webhook URL publicly — anyone with it can read your sheet data.</li></ul></div>
   </div>
 </div>
 
@@ -648,13 +627,15 @@ let DB={
 })();
 
 // ======================== NAV ========================
-const PAGES=['home','dashboard','weekly','trials','complaints','guide','admin'];
+const PAGES=['home','dashboard','weekly','trials','complaints','admin'];
 function go(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  const idx=PAGES.indexOf(id);
-  if(idx>=0)document.querySelectorAll('.ntab')[idx].classList.add('active');
+  // highlight matching tab by page id stored in onclick attr
+  document.querySelectorAll('.ntab').forEach(t=>{
+    if(t.getAttribute('onclick')===`go('${id}')`)t.classList.add('active');
+  });
   if(id==='dashboard')renderLeaders();
   if(id==='weekly')renderWeekly();
   if(id==='trials')renderTrials();
@@ -755,6 +736,33 @@ function dayViewHTML(d){
   const adsOk=d.logs.filter(l=>l.ads).length;
   const intOk=d.logs.filter(l=>l.inter).length;
   const total=d.logs.length;
+  const cards=d.logs.map(l=>{
+    const ldr=DB.leaders.find(x=>x.name===l.name);
+    const rank=ldr?ldr.rank:'—';
+    const i=DB.leaders.indexOf(ldr);
+    const c=av(i>=0?i:0);
+    const hasNote=l.note&&l.note.trim();
+    return `<div class="ocard">
+      <div class="ocard-left">
+        <div class="ocard-av" style="background:${c[0]};color:${c[1]};border:1px solid ${c[1]}33">${ini(l.name)}</div>
+        <div>
+          <div class="ocard-name">${l.name}</div>
+          <div class="ocard-rank"><span class="badge ${rc(rank)}">${rank.toUpperCase()}</span></div>
+        </div>
+      </div>
+      <div class="ocard-checks">
+        <div class="ochk">
+          <div class="ochk-icon ${l.ads?'y':'n'}">${l.ads?'✓':'✗'}</div>
+          <div class="ochk-lbl">ADS</div>
+        </div>
+        <div class="ochk">
+          <div class="ochk-icon ${l.inter?'y':'n'}">${l.inter?'✓':'✗'}</div>
+          <div class="ochk-lbl">INTER</div>
+        </div>
+      </div>
+      ${hasNote?`<div class="ocard-note">📝 ${l.note}</div>`:''}
+    </div>`;
+  }).join('');
   return `
     <div class="dh">
       <div class="dl">${d.day.toUpperCase()}</div>
@@ -762,24 +770,9 @@ function dayViewHTML(d){
         <span class="cbadge">ADS ${adsOk}/${total}</span>
         <span class="cbadge" style="color:var(--purple2);border-color:rgba(168,85,247,.3);background:rgba(168,85,247,.07)">INTER ${intOk}/${total}</span>
       </div>
-      <div class="dnt">${d.note||''}</div>
+      ${d.note?`<div class="dnt">${d.note}</div>`:''}
     </div>
-    <table class="dtbl">
-      <thead><tr><th>OFFICER</th><th>RANK</th><th>ADS</th><th>INTERACT</th><th>NOTE</th></tr></thead>
-      <tbody>
-        ${d.logs.map(l=>{
-          const ldr=DB.leaders.find(x=>x.name===l.name);
-          const rank=ldr?ldr.rank:'—';
-          return `<tr>
-            <td style="font-weight:500">${l.name}</td>
-            <td><span class="badge ${rc(rank)}">${rank.toUpperCase()}</span></td>
-            <td><span class="chk ${l.ads?'y':'n'}">${l.ads?'✓':'✗'}</span></td>
-            <td><span class="chk ${l.inter?'y':'n'}">${l.inter?'✓':'✗'}</span></td>
-            <td style="color:var(--text3);font-size:10px">${l.note||'—'}</td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-    </table>`;
+    <div class="ocard-list">${cards||'<div style="padding:8px;color:var(--text3);font-size:11px;font-family:var(--mono)">No officer logs for this day.</div>'}</div>`;
 }
 function toggleW(id){
   DB.ow[id]=!DB.ow[id];
@@ -1073,8 +1066,38 @@ function toast(msg,color='var(--cyan)'){
   setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300)},3800);
 }
 
+// ======================== AUTO-PULL ON LOAD ========================
+// Automatically pulls latest data from Google Sheets when page loads
+// so viewers always see live data without any manual action needed.
+async function autoLoadFromSheet(){
+  if(!CFG.wh)return; // no webhook configured yet, use default demo data
+  try{
+    const res=await fetch(CFG.wh+'?action=pull&t='+Date.now()); // cache-bust
+    if(!res.ok)return;
+    const json=await res.json();
+    if(json.leaders&&json.leaders.length)DB.leaders=json.leaders;
+    if(json.weeks&&json.weeks.length)DB.weeks=json.weeks;
+    if(json.trials&&json.trials.length)DB.trials=json.trials;
+    if(json.complaints&&json.complaints.length)DB.complaints=json.complaints;
+    refreshAll();
+    // re-render whichever page is currently active
+    const active=document.querySelector('.page.active');
+    if(active){
+      const id=active.id.replace('page-','');
+      if(id==='dashboard')renderLeaders();
+      if(id==='weekly')renderWeekly();
+      if(id==='trials')renderTrials();
+      if(id==='complaints')renderComplaints();
+    }
+    setSyncSt('OK',true);
+  }catch(e){
+    // silently fail — use default in-memory data
+  }
+}
+
 // ======================== INIT ========================
 refreshAll();
+autoLoadFromSheet();
 </script>
 </body>
 </html>
