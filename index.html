@@ -553,51 +553,26 @@ const CFG={
 
 // ======================== DB ========================
 let DB={
-  leaders:[
-    {id:1,name:'NovaStar',rank:'R5',role:'Alliance Leader',status:'Active',score:98,notes:'Alliance founder'},
-    {id:2,name:'VoidHunter',rank:'R5',role:'War Commander',status:'Active',score:94,notes:'Led KvK battles'},
-    {id:3,name:'CelestiaX',rank:'R5',role:'Rally Leader',status:'Active',score:91,notes:'Perfect attendance'},
-    {id:4,name:'DarkMatter',rank:'R4',role:'Rally Support',status:'Active',score:87,notes:''},
-    {id:5,name:'NebulaKing',rank:'High Council',role:'Recruitment Lead',status:'Active',score:83,notes:'Recruited 12 members'},
-    {id:6,name:'StarForge',rank:'Low Council',role:'Farm Coordinator',status:'Warning',score:61,notes:'Missed 2 check-ins'},
-    {id:7,name:'OrionPact',rank:'Department Head',role:'Diplomacy Dept.',status:'Active',score:79,notes:''},
-    {id:8,name:'CosmicWave',rank:'R4',role:'Alliance Rep',status:'Inactive',score:22,notes:'No activity 5 days'},
-  ],
-  weeks:[
-    {id:1,title:'Week 1',days:[
-      {id:101,day:'Monday',note:'Good start, all officers present',logs:[
-        {name:'NovaStar',ads:true,inter:true,note:''},
-        {name:'VoidHunter',ads:true,inter:true,note:''},
-        {name:'CelestiaX',ads:true,inter:true,note:''},
-        {name:'DarkMatter',ads:true,inter:false,note:'Interaction missed'},
-        {name:'NebulaKing',ads:true,inter:true,note:''},
-        {name:'StarForge',ads:false,inter:false,note:'Absent'},
-        {name:'OrionPact',ads:true,inter:true,note:''},
-        {name:'CosmicWave',ads:false,inter:false,note:'No show'},
-      ]},
-      {id:102,day:'Friday',note:'KvK — strong participation',logs:[
-        {name:'NovaStar',ads:true,inter:true,note:''},
-        {name:'VoidHunter',ads:true,inter:true,note:'Led rally'},
-        {name:'CelestiaX',ads:true,inter:true,note:''},
-        {name:'DarkMatter',ads:true,inter:true,note:''},
-        {name:'NebulaKing',ads:true,inter:true,note:''},
-        {name:'StarForge',ads:false,inter:false,note:'Still absent'},
-        {name:'OrionPact',ads:true,inter:false,note:''},
-        {name:'CosmicWave',ads:false,inter:false,note:''},
-      ]},
-    ]},
-  ],
-  trials:[
-    {id:1,name:'PulsarAce',since:'2025-04-28',progress:72,status:'In Progress',notes:'Strong performance. Needs to improve rally leadership.'},
-    {id:2,name:'AstroNova',since:'2025-05-01',progress:55,status:'In Progress',notes:'Consistent logins. Needs more alliance mail activity.'},
-    {id:3,name:'QuantumEdge',since:'2025-04-15',progress:100,status:'Promoted',notes:'Outstanding trial. Promoted to R4 on May 10.'},
-  ],
-  complaints:[
-    {id:1,title:'Missed KvK Rally — No Show',assign:'CosmicWave',body:'Officer failed to appear for 2 consecutive rally calls without prior notice.',status:'Pending',ts:'2025-05-14 18:30 UTC'},
-    {id:2,title:'Inactivity — 5 Day Absence',assign:'StarForge',body:'No alliance activity in 5 days.',status:'Reviewed',ts:'2025-05-12 09:00 UTC'},
-  ],
+  leaders:[],
+  weeks:[],
+  trials:[],
+  complaints:[],
   ow:{},rf:'all',cf:'all',adminIn:false,
 };
+
+// ── Restore from localStorage cache immediately (instant, before any fetch)
+(()=>{
+  try{
+    const cached=localStorage.getItem('sb_data');
+    if(cached){
+      const d=JSON.parse(cached);
+      if(d.leaders)DB.leaders=d.leaders;
+      if(d.weeks)DB.weeks=d.weeks;
+      if(d.trials)DB.trials=d.trials;
+      if(d.complaints)DB.complaints=d.complaints;
+    }
+  }catch(e){}
+})();
 
 // ======================== STARS ========================
 (()=>{
@@ -618,10 +593,13 @@ let DB={
     p+=Math.random()*15+5;if(p>100)p=100;
     bar.style.width=p+'%';txt.textContent=msgs[Math.min(Math.floor(p/22),4)];
     if(p>=100){clearInterval(iv);setTimeout(()=>{
-      document.getElementById('loading').style.opacity='0';
-      document.getElementById('app').style.opacity='1';
-      setTimeout(()=>document.getElementById('loading').style.display='none',500);
-      refreshAll();
+      // fetch sheet data FIRST, then reveal app
+      autoLoadFromSheet().finally(()=>{
+        document.getElementById('loading').style.opacity='0';
+        document.getElementById('app').style.opacity='1';
+        setTimeout(()=>document.getElementById('loading').style.display='none',500);
+        refreshAll();
+      });
     },400)}
   },100);
 })();
@@ -890,12 +868,12 @@ function addLeader(){
   });
   ['f-name','f-role','f-score','f-notes'].forEach(id=>document.getElementById(id).value='');
   renderAdminLists();refreshAll();buildPPGrid();
-  toast('Member added.','var(--cyan)');pushToSheet();
+  toast('Member added.','var(--cyan)');saveCache();pushToSheet();
 }
 function delLeader(id){
   DB.leaders=DB.leaders.filter(l=>l.id!==id);
   renderAdminLists();refreshAll();buildPPGrid();
-  toast('Member removed.','var(--orange)');pushToSheet();
+  toast('Member removed.','var(--orange)');saveCache();pushToSheet();
 }
 
 // ======================== CRUD — WEEKLY ========================
@@ -915,7 +893,7 @@ function addDayLog(){
   w.days.push({id:dayId,day,note,logs});
   document.getElementById('f-daynote').value='';
   buildPPGrid();renderAdminLists();refreshAll();
-  toast(`Log saved: ${wTitle} — ${day}`,'var(--cyan)');pushToSheet();
+  toast(`Log saved: ${wTitle} — ${day}`,'var(--cyan)');saveCache();pushToSheet();
 }
 function delDayLog(wid,did){
   const w=DB.weeks.find(x=>x.id===wid);
@@ -923,7 +901,7 @@ function delDayLog(wid,did){
   w.days=w.days.filter(d=>d.id!==did);
   if(!w.days.length)DB.weeks=DB.weeks.filter(x=>x.id!==wid);
   renderAdminLists();refreshAll();
-  toast('Day log removed.','var(--orange)');pushToSheet();
+  toast('Day log removed.','var(--orange)');saveCache();pushToSheet();
 }
 
 // ======================== CRUD — TRIALS ========================
@@ -940,12 +918,12 @@ function addTrial(){
   ['f-t-name','f-t-notes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-t-prog').value='';
   renderAdminLists();refreshAll();
-  toast('Trial officer added.','var(--cyan)');pushToSheet();
+  toast('Trial officer added.','var(--cyan)');saveCache();pushToSheet();
 }
 function delTrial(id){
   DB.trials=DB.trials.filter(t=>t.id!==id);
   renderAdminLists();refreshAll();
-  toast('Trial officer removed.','var(--orange)');pushToSheet();
+  toast('Trial officer removed.','var(--orange)');saveCache();pushToSheet();
 }
 
 // ======================== CRUD — COMPLAINTS ========================
@@ -961,12 +939,12 @@ function addComplaint(){
   });
   ['f-c-title','f-c-assign','f-c-body'].forEach(id=>document.getElementById(id).value='');
   renderAdminLists();refreshAll();
-  toast('Complaint published.','var(--orange)');pushToSheet();
+  toast('Complaint published.','var(--orange)');saveCache();pushToSheet();
 }
 function delComplaint(id){
   DB.complaints=DB.complaints.filter(c=>c.id!==id);
   renderAdminLists();refreshAll();
-  toast('Complaint removed.','var(--orange)');pushToSheet();
+  toast('Complaint removed.','var(--orange)');saveCache();pushToSheet();
 }
 
 // ======================== RENDER ADMIN LISTS ========================
@@ -1045,7 +1023,7 @@ async function pullNow(){
     if(json.weeks)DB.weeks=json.weeks;
     if(json.trials)DB.trials=json.trials;
     if(json.complaints)DB.complaints=json.complaints;
-    refreshAll();renderAdminLists();buildPPGrid();
+    refreshAll();renderAdminLists();buildPPGrid();saveCache();
     setSyncSt('OK',true);toast('Data pulled from Google Sheets!','var(--neon)');
   }catch(e){setSyncSt('ERROR',false,true);toast('Pull failed. Check webhook URL.','var(--red)')}
 }
@@ -1066,38 +1044,42 @@ function toast(msg,color='var(--cyan)'){
   setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300)},3800);
 }
 
-// ======================== AUTO-PULL ON LOAD ========================
-// Automatically pulls latest data from Google Sheets when page loads
-// so viewers always see live data without any manual action needed.
-async function autoLoadFromSheet(){
-  if(!CFG.wh)return; // no webhook configured yet, use default demo data
+// ======================== SAVE TO LOCAL CACHE ========================
+// Called after every data change so the browser remembers state on reload
+function saveCache(){
   try{
-    const res=await fetch(CFG.wh+'?action=pull&t='+Date.now()); // cache-bust
-    if(!res.ok)return;
+    localStorage.setItem('sb_data',JSON.stringify({
+      leaders:DB.leaders,weeks:DB.weeks,trials:DB.trials,complaints:DB.complaints
+    }));
+  }catch(e){}
+}
+
+// ======================== AUTO-PULL FROM SHEET ========================
+// Runs on every page load. Fetches live data from Google Sheets,
+// overwrites local cache, and re-renders everything.
+// If no webhook is set, silently uses whatever is in localStorage cache.
+async function autoLoadFromSheet(){
+  if(!CFG.wh)return; // no webhook — use cache silently
+  try{
+    const res=await fetch(CFG.wh+'?action=pull&t='+Date.now(),{cache:'no-store'});
+    if(!res.ok)throw new Error('bad response');
     const json=await res.json();
-    if(json.leaders&&json.leaders.length)DB.leaders=json.leaders;
-    if(json.weeks&&json.weeks.length)DB.weeks=json.weeks;
-    if(json.trials&&json.trials.length)DB.trials=json.trials;
-    if(json.complaints&&json.complaints.length)DB.complaints=json.complaints;
-    refreshAll();
-    // re-render whichever page is currently active
-    const active=document.querySelector('.page.active');
-    if(active){
-      const id=active.id.replace('page-','');
-      if(id==='dashboard')renderLeaders();
-      if(id==='weekly')renderWeekly();
-      if(id==='trials')renderTrials();
-      if(id==='complaints')renderComplaints();
-    }
+    // Only overwrite if the sheet actually has data
+    if(Array.isArray(json.leaders))  DB.leaders=json.leaders;
+    if(Array.isArray(json.weeks))    DB.weeks=json.weeks;
+    if(Array.isArray(json.trials))   DB.trials=json.trials;
+    if(Array.isArray(json.complaints))DB.complaints=json.complaints;
+    saveCache(); // persist fetched data so next reload is instant
     setSyncSt('OK',true);
   }catch(e){
-    // silently fail — use default in-memory data
+    // Sheet unreachable — use localStorage cache (already loaded at startup)
+    setSyncSt('CACHE',false);
   }
 }
 
 // ======================== INIT ========================
+// (cache restore already ran at top of script before DOM painted)
 refreshAll();
-autoLoadFromSheet();
 </script>
 </body>
 </html>
