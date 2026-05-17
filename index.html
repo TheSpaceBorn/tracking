@@ -344,7 +344,7 @@ body{background:var(--black);color:var(--text);font-family:var(--body);overflow-
       </div>
     </div>
   </div>
-  <div class="ticker"><span class="ticker-in">⬡ SPACE BORN — BEST RESTART PROJECT OF 2027 &nbsp;·&nbsp; ⚡ ALL OFFICERS MUST LOG DAILY ACTIVITY &nbsp;·&nbsp; ⚠ WEEKLY REVIEW EVERY SUNDAY 20:00 UTC &nbsp;·&nbsp; 🛸 TRIAL PERIOD: 7 DAYS &nbsp;·&nbsp;</span></div>
+  <div class="ticker"><span class="ticker-in">⬡ SPACE BORN — RISE OF KINGDOMS ALLIANCE &nbsp;·&nbsp; ⚡ ALL OFFICERS MUST LOG DAILY ACTIVITY &nbsp;·&nbsp; ⚠ WEEKLY REVIEW EVERY SUNDAY 20:00 UTC &nbsp;·&nbsp; 🛸 TRIAL PERIOD: 14 DAYS &nbsp;·&nbsp;</span></div>
   <div class="sec">
     <div class="swr">
       <div class="sw"><div class="swv" id="sw-ads">—</div><div class="swl">TOTAL ADS</div></div>
@@ -417,7 +417,7 @@ body{background:var(--black);color:var(--text);font-family:var(--body);overflow-
           <div class="field"><label>COMMANDER ID</label><input type="text" id="au" placeholder="username" autocomplete="username"></div>
           <div class="field"><label>ACCESS CODE</label><input type="password" id="ap" placeholder="••••••••" onkeydown="if(event.key==='Enter')aLogin()"></div>
           <button class="bblock" onclick="aLogin()">AUTHENTICATE ▶</button>
-          <div style="margin-top:12px;font-size:10px;color:var(--text3);text-align:center;font-family:var(--mono)"></div>
+          <div style="margin-top:12px;font-size:10px;color:var(--text3);text-align:center;font-family:var(--mono)">default: admin / spaceborn2025</div>
         </div>
       </div>
     </div>
@@ -546,9 +546,15 @@ body{background:var(--black);color:var(--text);font-family:var(--body);overflow-
 
 <script>
 // ======================== CONFIG ========================
+// ⚠ PASTE YOUR APPS SCRIPT WEB APP URL BELOW — this makes ALL devices load live data
+const WEBHOOK_URL = localStorage.getItem('sb_wh') || '';
+// ↑ After you paste your URL via Admin → Settings → Save URL, it gets stored here.
+// For instant multi-device sync, also hardcode it directly:
+// const WEBHOOK_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+
 const CFG={
-  wh:localStorage.getItem('sb_wh')||'',
-  pw:localStorage.getItem('sb_pw')||'spaceborn2025',
+  wh: WEBHOOK_URL,
+  pw: localStorage.getItem('sb_pw')||'spaceborn2025',
 };
 
 // ======================== DB ========================
@@ -981,8 +987,12 @@ function renderAdminLists(){
 // ======================== SETTINGS ========================
 function saveWH(){
   const url=document.getElementById('f-webhook').value.trim();
-  CFG.wh=url;localStorage.setItem('sb_wh',url);
-  updateWHUI();toast('Webhook URL saved.','var(--neon)');
+  CFG.wh=url;
+  localStorage.setItem('sb_wh',url);
+  updateWHUI();
+  toast('Webhook URL saved. Now paste this URL into the WEBHOOK_URL line in index.html for all devices to auto-load.','var(--neon)');
+  // immediately pull with the new URL
+  if(url) autoLoadFromSheet();
 }
 function updateWHUI(){
   const el=document.getElementById('f-webhook');
@@ -1055,24 +1065,34 @@ function saveCache(){
 }
 
 // ======================== AUTO-PULL FROM SHEET ========================
-// Runs on every page load. Fetches live data from Google Sheets,
-// overwrites local cache, and re-renders everything.
-// If no webhook is set, silently uses whatever is in localStorage cache.
 async function autoLoadFromSheet(){
-  if(!CFG.wh)return; // no webhook — use cache silently
+  if(!CFG.wh){
+    // No webhook set — show empty state message on home
+    const hl=document.getElementById('hero-leaders');
+    if(hl&&!DB.leaders.length) hl.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);font-family:var(--mono);font-size:12px">⬡ No data yet — Admin must set the Webhook URL in Settings.</div>';
+    return;
+  }
   try{
     const res=await fetch(CFG.wh+'?action=pull&t='+Date.now(),{cache:'no-store'});
     if(!res.ok)throw new Error('bad response');
     const json=await res.json();
-    // Only overwrite if the sheet actually has data
-    if(Array.isArray(json.leaders))  DB.leaders=json.leaders;
-    if(Array.isArray(json.weeks))    DB.weeks=json.weeks;
-    if(Array.isArray(json.trials))   DB.trials=json.trials;
+    if(Array.isArray(json.leaders))   DB.leaders=json.leaders;
+    if(Array.isArray(json.weeks))     DB.weeks=json.weeks;
+    if(Array.isArray(json.trials))    DB.trials=json.trials;
     if(Array.isArray(json.complaints))DB.complaints=json.complaints;
-    saveCache(); // persist fetched data so next reload is instant
+    saveCache();
+    // re-render everything
+    refreshAll();
+    const active=document.querySelector('.page.active');
+    if(active){
+      const pid=active.id.replace('page-','');
+      if(pid==='dashboard')renderLeaders();
+      if(pid==='weekly')renderWeekly();
+      if(pid==='trials')renderTrials();
+      if(pid==='complaints')renderComplaints();
+    }
     setSyncSt('OK',true);
   }catch(e){
-    // Sheet unreachable — use localStorage cache (already loaded at startup)
     setSyncSt('CACHE',false);
   }
 }
