@@ -546,14 +546,13 @@ body{background:var(--black);color:var(--text);font-family:var(--body);overflow-
 
 <script>
 // ======================== CONFIG ========================
-// ⚠ PASTE YOUR APPS SCRIPT WEB APP URL BELOW — this makes ALL devices load live data
-const WEBHOOK_URL = localStorage.getItem('sb_wh') || '';
-// ↑ After you paste your URL via Admin → Settings → Save URL, it gets stored here.
-// For instant multi-device sync, also hardcode it directly:
-// const WEBHOOK_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+// ▼▼▼ PASTE YOUR APPS SCRIPT URL HERE — replace the empty string ▼▼▼
+const HARDCODED_WEBHOOK = '';
+// ▲▲▲ Example: const HARDCODED_WEBHOOK = 'https://script.google.com/macros/s/AKfycb.../exec';
 
+// Do not touch below — falls back to whatever admin saved in browser
 const CFG={
-  wh: WEBHOOK_URL,
+  wh: HARDCODED_WEBHOOK || localStorage.getItem('sb_wh') || '',
   pw: localStorage.getItem('sb_pw')||'spaceborn2025',
 };
 
@@ -1013,7 +1012,13 @@ async function pushToSheet(){
   if(!CFG.wh)return;
   setSyncSt('SYNCING',false);
   try{
-    await fetch(CFG.wh,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'push',data:{leaders:DB.leaders,weeks:DB.weeks,trials:DB.trials,complaints:DB.complaints}})});
+    // Use no-cors for POST — Apps Script POST doesn't need to read response
+    await fetch(CFG.wh,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'push',data:{leaders:DB.leaders,weeks:DB.weeks,trials:DB.trials,complaints:DB.complaints}})
+    });
     setSyncSt('OK',true);
     const el=document.getElementById('sv-rec');
     if(el)el.textContent=DB.leaders.length+DB.weeks.reduce((a,w)=>a+w.days.length,0)+DB.trials.length+DB.complaints.length;
@@ -1027,15 +1032,16 @@ async function pullNow(){
   if(!CFG.wh){toast('Set webhook URL first.','var(--red)');return}
   setSyncSt('PULLING',false);toast('Pulling from Google Sheets...','var(--cyan)');
   try{
-    const res=await fetch(CFG.wh+'?action=pull');
+    const res=await fetch(CFG.wh+'?action=pull&t='+Date.now(),{redirect:'follow'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
     const json=await res.json();
-    if(json.leaders)DB.leaders=json.leaders;
-    if(json.weeks)DB.weeks=json.weeks;
-    if(json.trials)DB.trials=json.trials;
-    if(json.complaints)DB.complaints=json.complaints;
+    if(Array.isArray(json.leaders))    DB.leaders=json.leaders;
+    if(Array.isArray(json.weeks))      DB.weeks=json.weeks;
+    if(Array.isArray(json.trials))     DB.trials=json.trials;
+    if(Array.isArray(json.complaints)) DB.complaints=json.complaints;
     refreshAll();renderAdminLists();buildPPGrid();saveCache();
     setSyncSt('OK',true);toast('Data pulled from Google Sheets!','var(--neon)');
-  }catch(e){setSyncSt('ERROR',false,true);toast('Pull failed. Check webhook URL.','var(--red)')}
+  }catch(e){setSyncSt('ERROR',false,true);toast('Pull failed: '+e.message,'var(--red)')}
 }
 function setSyncSt(msg,ok,err){
   const sv=document.getElementById('sv-st');
@@ -1067,21 +1073,21 @@ function saveCache(){
 // ======================== AUTO-PULL FROM SHEET ========================
 async function autoLoadFromSheet(){
   if(!CFG.wh){
-    // No webhook set — show empty state message on home
     const hl=document.getElementById('hero-leaders');
-    if(hl&&!DB.leaders.length) hl.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);font-family:var(--mono);font-size:12px">⬡ No data yet — Admin must set the Webhook URL in Settings.</div>';
+    if(hl&&!DB.leaders.length) hl.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);font-family:var(--mono);font-size:12px">⬡ Webhook URL not set. Open Admin → Sync/Settings to configure.</div>';
     return;
   }
   try{
-    const res=await fetch(CFG.wh+'?action=pull&t='+Date.now(),{cache:'no-store'});
-    if(!res.ok)throw new Error('bad response');
+    // Apps Script GET with ?action=pull — CORS is allowed on GET by Google
+    const url=CFG.wh+'?action=pull&t='+Date.now();
+    const res=await fetch(url,{redirect:'follow'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
     const json=await res.json();
-    if(Array.isArray(json.leaders))   DB.leaders=json.leaders;
-    if(Array.isArray(json.weeks))     DB.weeks=json.weeks;
-    if(Array.isArray(json.trials))    DB.trials=json.trials;
-    if(Array.isArray(json.complaints))DB.complaints=json.complaints;
+    if(Array.isArray(json.leaders)   && json.leaders.length>=0)   DB.leaders=json.leaders;
+    if(Array.isArray(json.weeks)     && json.weeks.length>=0)     DB.weeks=json.weeks;
+    if(Array.isArray(json.trials)    && json.trials.length>=0)    DB.trials=json.trials;
+    if(Array.isArray(json.complaints)&& json.complaints.length>=0)DB.complaints=json.complaints;
     saveCache();
-    // re-render everything
     refreshAll();
     const active=document.querySelector('.page.active');
     if(active){
@@ -1093,7 +1099,8 @@ async function autoLoadFromSheet(){
     }
     setSyncSt('OK',true);
   }catch(e){
-    setSyncSt('CACHE',false);
+    console.warn('Sheet pull failed:',e.message);
+    setSyncSt('OFFLINE',false,true);
   }
 }
 
