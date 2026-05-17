@@ -1032,9 +1032,7 @@ async function pullNow(){
   if(!CFG.wh){toast('Set webhook URL first.','var(--red)');return}
   setSyncSt('PULLING',false);toast('Pulling from Google Sheets...','var(--cyan)');
   try{
-    const res=await fetch(CFG.wh+'?action=pull&t='+Date.now(),{redirect:'follow'});
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    const json=await res.json();
+    const json=await jsonpPull(CFG.wh);
     if(Array.isArray(json.leaders))    DB.leaders=json.leaders;
     if(Array.isArray(json.weeks))      DB.weeks=json.weeks;
     if(Array.isArray(json.trials))     DB.trials=json.trials;
@@ -1061,7 +1059,6 @@ function toast(msg,color='var(--cyan)'){
 }
 
 // ======================== SAVE TO LOCAL CACHE ========================
-// Called after every data change so the browser remembers state on reload
 function saveCache(){
   try{
     localStorage.setItem('sb_data',JSON.stringify({
@@ -1070,23 +1067,42 @@ function saveCache(){
   }catch(e){}
 }
 
+// ======================== JSONP PULL — bypasses CORS completely ========================
+// Uses a <script> tag instead of fetch so Google Apps Script redirect is not a problem
+function jsonpPull(url){
+  return new Promise((resolve,reject)=>{
+    const cbName='sb_cb_'+Date.now();
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>{
+      delete window[cbName];
+      script.remove();
+      reject(new Error('timeout'));
+    },12000);
+    window[cbName]=(data)=>{
+      clearTimeout(timer);
+      delete window[cbName];
+      script.remove();
+      resolve(data);
+    };
+    script.src=url+'?action=pull&callback='+cbName+'&t='+Date.now();
+    script.onerror=()=>{clearTimeout(timer);delete window[cbName];script.remove();reject(new Error('script error'))};
+    document.head.appendChild(script);
+  });
+}
+
 // ======================== AUTO-PULL FROM SHEET ========================
 async function autoLoadFromSheet(){
   if(!CFG.wh){
     const hl=document.getElementById('hero-leaders');
-    if(hl&&!DB.leaders.length) hl.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);font-family:var(--mono);font-size:12px">⬡ Webhook URL not set. Open Admin → Sync/Settings to configure.</div>';
+    if(hl&&!DB.leaders.length) hl.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);font-family:var(--mono);font-size:12px">⬡ Admin: paste your Apps Script URL into HARDCODED_WEBHOOK in index.html</div>';
     return;
   }
   try{
-    // Apps Script GET with ?action=pull — CORS is allowed on GET by Google
-    const url=CFG.wh+'?action=pull&t='+Date.now();
-    const res=await fetch(url,{redirect:'follow'});
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const json=await res.json();
-    if(Array.isArray(json.leaders)   && json.leaders.length>=0)   DB.leaders=json.leaders;
-    if(Array.isArray(json.weeks)     && json.weeks.length>=0)     DB.weeks=json.weeks;
-    if(Array.isArray(json.trials)    && json.trials.length>=0)    DB.trials=json.trials;
-    if(Array.isArray(json.complaints)&& json.complaints.length>=0)DB.complaints=json.complaints;
+    const json=await jsonpPull(CFG.wh);
+    if(Array.isArray(json.leaders))    DB.leaders=json.leaders;
+    if(Array.isArray(json.weeks))      DB.weeks=json.weeks;
+    if(Array.isArray(json.trials))     DB.trials=json.trials;
+    if(Array.isArray(json.complaints)) DB.complaints=json.complaints;
     saveCache();
     refreshAll();
     const active=document.querySelector('.page.active');
@@ -1099,10 +1115,12 @@ async function autoLoadFromSheet(){
     }
     setSyncSt('OK',true);
   }catch(e){
-    console.warn('Sheet pull failed:',e.message);
+    console.warn('Pull failed:',e.message);
     setSyncSt('OFFLINE',false,true);
   }
 }
+
+// ======================== PUSH (POST stays as fetch with no-cors) ========================
 
 // ======================== INIT ========================
 // (cache restore already ran at top of script before DOM painted)
